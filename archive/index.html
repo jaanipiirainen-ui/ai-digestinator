@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Digest — Archive</title>
+  <style>
+    :root {
+      --bg: #F5F1EB; --surface: #FDFCFA; --border: #E5DDD3;
+      --accent: #C96442; --text: #1A1714; --muted: #6B6259; --dim: #B0A89E;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .header { border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 12px; background: rgba(245,241,235,0.95); backdrop-filter: blur(12px); }
+    .logo { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+    .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; display: inline-block; }
+    .back { color: var(--muted); font-size: 13px; text-decoration: none; margin-left: auto; }
+    .back:hover { color: var(--accent); }
+    .main { max-width: 700px; margin: 0 auto; padding: 40px 24px; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+    .issue-list { display: flex; flex-direction: column; gap: 10px; }
+    .issue {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px; text-decoration: none;
+      color: var(--text); transition: border-color 0.15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .issue:hover { border-color: var(--accent); }
+    .issue-date { font-size: 15px; font-weight: 600; }
+    .issue-label { font-size: 13px; color: var(--muted); flex: 1; }
+    .issue-arrow { color: var(--dim); }
+    .empty { color: var(--dim); font-size: 14px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <span class="logo"><span class="logo-dot"></span>AI Digest</span>
+    <a class="back" href="/">← Latest issue</a>
+  </header>
+  <main class="main">
+    <h1>Archive</h1>
+    <p class="sub">All past issues — updated every Monday.</p>
+    <div class="issue-list" id="list">
+      <p class="empty">No archived issues yet. Check back after the first Monday run.</p>
+    </div>
+  </main>
+  <script>
+    // Issues are added here automatically by the weekly task
+    // Format: { date: "2026-04-20", label: "Week of April 14–20, 2026", file: "AI-Digest-2026-04-20.html" }
+    const ISSUES = [];
+
+    const list = document.getElementById('list');
+    if (ISSUES.length) {
+      list.innerHTML = ISSUES.map(i => `
+        <a class="issue" href="${i.file}">
+          <div>
+            <div class="issue-date">${i.label}</div>
+            <div class="issue-label">${i.date}</div>
+          </div>
+          <div class="issue-arrow">→</div>
+        </a>`).join('');
+    }
+  </script>
+</body>
+</html>

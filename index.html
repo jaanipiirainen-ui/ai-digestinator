@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Digest</title>
+  <style>
+    :root {
+      --bg: #F5F1EB;
+      --surface: #FDFCFA;
+      --surface2: #F0EBE3;
+      --border: #E5DDD3;
+      --border-soft: #EDE7DF;
+      --accent: #C96442;
+      --accent-soft: rgba(201,100,66,0.09);
+      --text: #1A1714;
+      --muted: #6B6259;
+      --dim: #B0A89E;
+
+      --tag-model:       #7B4F9E;
+      --tag-tool:        #2B7DBF;
+      --tag-research:    #2A8A5E;
+      --tag-workflow:    #B06B1A;
+      --tag-open-source: #B03A2A;
+      --tag-business:    #9B3070;
+
+      --verdict-worth: #2A8A5E;
+      --verdict-later: #B06B1A;
+      --verdict-skip:  #8C857E;
+      --cross: #B06B1A;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: var(--accent); }
+
+    /* ── HEADER ── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(245,241,235,0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    .header-inner {
+      max-width: 940px; margin: 0 auto; padding: 0 24px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 16px; font-weight: 700; letter-spacing: -0.4px;
+      color: var(--text);
+    }
+    .logo-pulse {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.55; transform: scale(0.85); }
+    }
+    .header-date { color: var(--muted); font-size: 13px; flex: 1; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .search-wrap { position: relative; }
+    .search-wrap::before {
+      content: '⌕'; position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%); color: var(--dim); font-size: 16px; pointer-events: none;
+    }
+    .search {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 6px 12px 6px 30px;
+      border-radius: 8px; font-size: 13px; width: 200px; outline: none;
+      transition: border-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .search:focus { border-color: var(--accent); }
+    .search::placeholder { color: var(--dim); }
+    .archive-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); padding: 6px 12px; border-radius: 8px;
+      font-size: 13px; cursor: pointer; white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .archive-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── MAIN ── */
+    .main { max-width: 940px; margin: 0 auto; padding: 28px 24px 80px; }
+
+    /* ── TL;DR ── */
+    .tldr {
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 22px 26px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .tldr-eyebrow {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--accent); margin-bottom: 8px;
+    }
+    .tldr-text { color: var(--text); font-size: 14px; line-height: 1.8; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap; margin-bottom: 24px;
+    }
+    .filter-label { font-size: 11px; color: var(--dim); margin-right: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tag-pill {
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--muted); transition: all 0.15s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .tag-pill:hover { color: var(--text); border-color: var(--dim); }
+    .tag-pill.on { color: #fff; }
+    .tag-pill.on[data-tag="all"]         { background: var(--accent);         border-color: var(--accent); }
+    .tag-pill.on[data-tag="model"]       { background: var(--tag-model);       border-color: var(--tag-model); }
+    .tag-pill.on[data-tag="tool"]        { background: var(--tag-tool);        border-color: var(--tag-tool); }
+    .tag-pill.on[data-tag="research"]    { background: var(--tag-research);    border-color: var(--tag-research); }
+    .tag-pill.on[data-tag="workflow"]    { background: var(--tag-workflow);     border-color: var(--tag-workflow); }
+    .tag-pill.on[data-tag="open-source"] { background: var(--tag-open-source); border-color: var(--tag-open-source); }
+    .tag-pill.on[data-tag="business"]    { background: var(--tag-business);    border-color: var(--tag-business); }
+    .cross-toggle {
+      margin-left: auto; display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--muted); cursor: pointer; user-select: none;
+    }
+    .switch {
+      width: 34px; height: 19px; background: var(--border); border-radius: 10px;
+      position: relative; transition: background 0.2s; flex-shrink: 0;
+    }
+    .switch.on { background: var(--cross); }
+    .switch::after {
+      content: ''; width: 15px; height: 15px; background: #fff; border-radius: 50%;
+      position: absolute; top: 2px; left: 2px; transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .switch.on::after { transform: translateX(15px); }
+
+    /* ── SECTION ── */
+    .section {
+      border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px;
+      overflow: hidden; background: var(--surface);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .sec-head {
+      display: flex; align-items: center; gap: 10px; padding: 14px 18px;
+      background: var(--surface); cursor: pointer; user-select: none;
+      transition: background 0.15s;
+    }
+    .sec-head:hover { background: var(--surface2); }
+    .sec-icon { font-size: 16px; }
+    .sec-title { font-size: 14px; font-weight: 600; flex: 1; color: var(--text); }
+    .sec-count {
+      font-size: 11px; color: var(--muted);
+      background: var(--bg); padding: 2px 8px; border-radius: 100px;
+      border: 1px solid var(--border);
+    }
+    .sec-chevron { color: var(--dim); font-size: 11px; transition: transform 0.2s; }
+    .section.shut .sec-chevron { transform: rotate(-90deg); }
+    .section.shut .sec-body { display: none; }
+    .sec-body { border-top: 1px solid var(--border); }
+
+    /* ── SUB-HEADING ── */
+    .sub-head {
+      padding: 8px 18px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--dim);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    /* ── ITEM ── */
+    .item {
+      padding: 14px 18px; border-bottom: 1px solid var(--border-soft);
+      transition: background 0.12s;
+    }
+    .item:last-child { border-bottom: none; }
+    .item:hover { background: var(--surface2); }
+    .item.hidden { display: none !important; }
+
+    .item-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px; }
+    .item-title { font-size: 14px; font-weight: 500; flex: 1; line-height: 1.4; color: var(--text); }
+    .item-badges { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+    .item-meta { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); margin-bottom: 6px; }
+    .item-body { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px; border-radius: 100px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .b-cross { background: rgba(176,107,26,0.1); color: #946010;   border: 1px solid rgba(176,107,26,0.22); }
+    .b-worth { background: rgba(42,138,94,0.1);  color: #1E7A50;   border: 1px solid rgba(42,138,94,0.22); }
+    .b-later { background: rgba(176,107,26,0.1); color: #946010;   border: 1px solid rgba(176,107,26,0.22); }
+    .b-skip  { background: rgba(140,133,126,0.1); color: #7A7470;  border: 1px solid rgba(140,133,126,0.22); }
+    .b-new   { background: rgba(201,100,66,0.1); color: var(--accent); border: 1px solid rgba(201,100,66,0.22); }
+    .b-cont  { background: rgba(201,100,66,0.07); color: #B05838;  border: 1px solid rgba(201,100,66,0.18); }
+
+    /* inline tag chips */
+    .tc {
+      display: inline-flex; padding: 1px 7px; border-radius: 100px;
+      font-size: 11px; font-weight: 500;
+    }
+    .tc-model       { background: rgba(123,79,158,0.1); color: #6B3D8E; }
+    .tc-tool        { background: rgba(43,125,191,0.1); color: #1A6AAD; }
+    .tc-research    { background: rgba(42,138,94,0.1);  color: #1E7A50; }
+    .tc-workflow    { background: rgba(176,107,26,0.1); color: #946010; }
+    .tc-open-source { background: rgba(176,58,42,0.1);  color: #962B1A; }
+    .tc-business    { background: rgba(155,48,112,0.1); color: #832058; }
+
+    /* ── TOP STORIES ── */
+    .story { display: flex; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--border-soft); }
+    .story:last-child { border-bottom: none; }
+    .story:hover { background: var(--surface2); }
+    .story-num { font-size: 24px; font-weight: 800; color: var(--border); line-height: 1; min-width: 28px; padding-top: 2px; }
+    .story-body { flex: 1; }
+    .story-hl { font-size: 15px; font-weight: 600; line-height: 1.35; margin-bottom: 5px; }
+    .story-sum { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+    .story-foot { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── WORTH TESTING ── */
+    .worth-item { padding: 16px 18px; border-bottom: 1px solid var(--border-soft); }
+    .worth-item:last-child { border-bottom: none; }
+    .worth-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+    .worth-num {
+      width: 24px; height: 24px; flex-shrink: 0;
+      background: var(--accent); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: #fff; margin-top: 1px;
+    }
+    .worth-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .worth-title a:hover { color: var(--accent); }
+    .worth-desc { font-size: 13px; color: var(--muted); line-height: 1.65; padding-left: 34px; margin-bottom: 10px; }
+    .prompt-box {
+      margin-left: 34px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 14px; position: relative;
+    }
+    .prompt-eyebrow {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--accent); margin-bottom: 6px;
+    }
+    .prompt-text {
+      font-size: 12px; color: var(--muted);
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      line-height: 1.65; white-space: pre-wrap; padding-right: 60px;
+    }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); padding: 4px 10px; border-radius: 6px;
+      font-size: 11px; cursor: pointer; transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn.ok { color: var(--verdict-worth); border-color: var(--verdict-worth); }
+
+    /* ── PROMPT OF THE WEEK ── */
+    .potw {
+      border: 1px solid rgba(201,100,66,0.25);
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(201,100,66,0.06), rgba(176,107,26,0.04));
+      padding: 22px 24px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .potw-eye {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--accent); margin-bottom: 8px;
+    }
+    .potw-title { font-size: 16px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+    .potw-desc { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .potw-prompt-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 16px; position: relative;
+    }
+    .potw-prompt-text {
+      font-size: 13px; color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      line-height: 1.7; white-space: pre-wrap; padding-right: 70px;
+    }
+
+    /* ── NOTHING ── */
+    .nothing { padding: 20px 18px; font-size: 13px; color: var(--dim); font-style: italic; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center; padding: 40px 24px;
+      color: var(--dim); font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .footer a { color: var(--dim); }
+    .footer a:hover { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     DIGEST DATA — replaced each week by Claude
+     ══════════════════════════════════════════ -->
+<script>
+const DIGEST = {
+  date: "April 14–20, 2026",
+  generated: "2026-04-20",
+  tldr: "OpenAI quietly shipped a reasoning model that benchmarks above o3 on MATH and GPQA. Hugging Face released a massive new instruction-tuning dataset that's already spawned three fine-tuned models in the community. And the Claude plugin ecosystem had its biggest week yet — four new verified plugins and a community skill for automated slide decks went viral on X.",
+
+  topStories: [
+    {
+      headline: "OpenAI's new reasoning model tops o3 on key benchmarks",
+      summary: "A surprise mid-week drop that outscores o3 on MATH and GPQA while reportedly using 40% fewer tokens. Community is divided on whether the benchmark gains translate to real-world tasks.",
+      link: "https://openai.com",
+      sources: ["YouTube", "Reddit", "HN", "X"],
+      tags: ["model", "research"],
+      verdict: "worth-it",
+      trend: "new"
+    },
+    {
+      headline: "HuggingFace drops 2M-row instruction-tuning dataset",
+      summary: "The 'OpenInstruct-2M' dataset covers 42 task types including chain-of-thought, tool use, and multi-turn conversation. Already used to produce three community fine-tunes within 48 hours.",
+      link: "https://huggingface.co",
+      sources: ["HuggingFace", "Reddit"],
+      tags: ["research", "open-source"],
+      verdict: "worth-it",
+      trend: "new"
+    },
+    {
+      headline: "Claude plugin ecosystem: biggest week yet",
+      summary: "Anthropic verified four new plugins, and a community skill for AI-generated slide decks crossed 2,000 GitHub stars. This is the fastest growth week for the plugin ecosystem since launch.",
+      link: "https://claude.ai/plugins",
+      sources: ["X", "Reddit"],
+      tags: ["tool", "workflow"],
+      verdict: "worth-it",
+      trend: "up"
+    }
+  ],
+
+  youtube: [
+    {
+      channel: "Matt Wolfe",
+      handle: "@mreflow",
+      videos: [
+        {
+          title: "Every AI Tool Released This Week — April Edition",
+          link: "https://youtube.com/watch?v=example1",
+          duration: "22 min",
+          takeaway: "Wolfe covers 14 new tools with particular focus on a new no-code agent builder that lets you chain Claude calls visually. The segment on AI video generation at 12:40 is the most useful — three tools compared side by side.",
+          tags: ["tool", "workflow"],
+          verdict: "worth-it"
+        }
+      ]
+    },
+    {
+      channel: "Matthew Berman",
+      handle: "@matthewberman",
+      videos: [
+        {
+          title: "I tested the new OpenAI reasoning model for 3 days straight",
+          link: "https://youtube.com/watch?v=example2",
+          duration: "31 min",
+          takeaway: "Thorough hands-on evaluation across coding, math, and writing tasks — not just benchmark slides. Key finding: it genuinely outperforms o3 on multi-step coding but lags on creative writing.",
+          tags: ["model", "research"],
+          verdict: "worth-it"
+        }
+      ]
+    },
+    {
+      channel: "Nate Herk",
+      handle: "@nateherk",
+      videos: [
+        {
+          title: "Build a Claude Agent That Runs on a Schedule",
+          link: "https://youtube.com/watch?v=example3",
+          duration: "18 min",
+          takeaway: "Step-by-step tutorial using Claude + a simple cron job to automate a research workflow. The GitHub repo linked in the description is a clean starting point for your own scheduled agents.",
+          tags: ["workflow", "tool"],
+          verdict: "worth-it"
+        }
+      ]
+    },
+    {
+      channel: "Nate B Jones",
+      handle: "@nateBjones",
+      videos: []
+    },
+    {
+      channel: "AI Search",
+      handle: "@aisearch",
+      videos: [
+        {
+          title: "Perplexity vs. Claude vs. Gemini: Deep Research Compared",
+          link: "https://youtube.com/watch?v=example4",
+          duration: "14 min",
+          takeaway: "Structured comparison using five identical research prompts. Claude wins on citation accuracy and source diversity; Perplexity wins on speed. Worth watching if you use AI for research tasks.",
+          tags: ["tool", "research"],
+          verdict: "watch-later"
+        }
+      ]
+    },
+    {
+      channel: "Greg Isenberg",
+      handle: "@gregisenberg",
+      videos: [
+        {
+          title: "The AI Micro-SaaS Playbook: From Idea to $10k MRR",
+          link: "https://youtube.com/watch?v=example5",
+          duration: "27 min",
+          takeaway: "Business-focused breakdown of how founders are using AI tools to ship fast and validate early. Heavy on strategy, light on technical depth — best for non-engineers thinking about AI products.",
+          tags: ["business", "workflow"],
+          verdict: "watch-later"
+        }
+      ]
+    }
+  ],
+
+  huggingface: {
+    models: [
+      {
+        name: "Mistral-Small-3.2-Instruct",
+        link: "https://huggingface.co/mistralai/Mistral-Small-3.2-Instruct",
+        summary: "An updated instruction-tuned Mistral Small that closes the gap with larger models on coding tasks. Fits in 8GB VRAM — solid local option.",
+        tags: ["model", "open-source"],
+        verdict: "worth-it"
+      },
+      {
+        name: "Qwen2.5-72B-Vision",
+        link: "https://huggingface.co/Qwen/Qwen2.5-72B-Vision",
+        summary: "Alibaba's latest multimodal model with strong chart and document understanding. Benchmarks competitively with GPT-4o on visual tasks.",
+        tags: ["model", "research"],
+        verdict: "watch-later"
+      }
+    ],
+    datasets: [
+      {
+        name: "OpenInstruct-2M",
+        link: "https://huggingface.co/datasets/example/openinstruct-2m",
+        summary: "2 million instruction-response pairs covering 42 task types. Heavy on chain-of-thought and tool-use examples. Already the most-downloaded dataset this month.",
+        tags: ["research", "open-source"],
+        verdict: "worth-it"
+      }
+    ],
+    papers: [
+      {
+        name: "Scaling Sparse Autoencoders to 70B",
+        link: "https://huggingface.co/papers/example1",
+        authors: "Anthropic team",
+        summary: "Shows that sparse autoencoders (SAEs) for interpretability can scale to 70B parameter models with manageable compute. Important step for understanding what large models are 'thinking'.",
+        tags: ["research"],
+        verdict: "worth-it"
+      },
+      {
+        name: "Do LLMs Learn to Reason or Memorize?",
+        link: "https://huggingface.co/papers/example2",
+        authors: "MIT CSAIL",
+        summary: "Carefully designed study showing that many benchmark gains come from distribution leakage rather than genuine reasoning. Controversial but methodologically solid.",
+        tags: ["research"],
+        verdict: "worth-it"
+      }
+    ]
+  },
+
+  openclaw: [
+    {
+      title: "OpenClaw v0.8.2 — Multi-agent orchestration support",
+      link: "https://github.com/openclaw/openclaw/releases/tag/v0.8.2",
+      summary: "Adds first-class support for spawning and coordinating sub-agents. You can now define an 'orchestrator' skill that delegates to specialist sub-skills. Breaking change: skill manifest format updated.",
+      tags: ["tool", "workflow"],
+      verdict: "worth-it",
+      type: "release"
+    },
+    {
+      title: "@steipete: Tips for writing skills that survive context limits",
+      link: "https://x.com/steipete/status/example",
+      summary: "Thread on how to structure skill prompts so they work well even in long conversations. Key tip: always re-state critical constraints at the end of the prompt, not just the beginning.",
+      tags: ["workflow"],
+      verdict: "worth-it",
+      type: "community"
+    }
+  ],
+
+  plugins: {
+    verified: [
+      {
+        name: "Linear",
+        link: "https://claude.ai/plugins",
+        summary: "Connect Claude to your Linear workspace. Create issues, update sprint status, and query project data directly in conversation.",
+        install: "claude plugin install linear"
+      },
+      {
+        name: "Airtable",
+        link: "https://claude.ai/plugins",
+        summary: "Read and write Airtable bases from Claude. Useful for teams using Airtable as a lightweight CRM or project tracker.",
+        install: "claude plugin install airtable"
+      }
+    ],
+    community: [
+      {
+        name: "auto-slides",
+        author: "github.com/mxkaske",
+        link: "https://github.com/mxkaske/auto-slides",
+        summary: "Skill that takes a brief or bullet points and generates a full PPTX presentation using Claude. 2,200 GitHub stars this week. Validated by multiple r/ClaudeAI users.",
+        tags: ["workflow", "tool"],
+        validated: true
+      },
+      {
+        name: "research-digest",
+        author: "github.com/simonw",
+        link: "https://github.com/simonw/research-digest",
+        summary: "Automates reading and summarizing arXiv papers in a given topic area. Runs as a daily scheduled skill. Community reports it works well; some issues with very long PDFs.",
+        tags: ["research", "workflow"],
+        validated: true
+      }
+    ]
+  },
+
+  community: {
+    reddit: [
+      {
+        sub: "r/MachineLearning",
+        title: "Reproducing the OpenAI reasoning model results — our findings",
+        link: "https://reddit.com/r/MachineLearning/example1",
+        summary: "University group ran the same benchmarks on their own infra and got notably different numbers. Sparked a 400-comment thread on benchmark methodology.",
+        upvotes: "1.8k"
+      },
+      {
+        sub: "r/LocalLLaMA",
+        title: "Mistral Small 3.2 is the best 8B model I've run locally — comparison post",
+        link: "https://reddit.com/r/LocalLLaMA/example2",
+        summary: "Hands-on comparison with Llama 3.1, Phi-4, and Gemma 3 on a home rig. Includes perplexity scores and subjective quality ratings across 20 tasks.",
+        upvotes: "2.3k"
+      },
+      {
+        sub: "r/LocalLLaMA",
+        title: "Anyone else seeing hallucination regressions in the latest Ollama build?",
+        link: "https://reddit.com/r/LocalLLaMA/example3",
+        summary: "Reports of increased factual errors with models run through Ollama 0.6.x. Devs responded in thread — appears to be a quantization issue, fix incoming.",
+        upvotes: "890"
+      },
+      {
+        sub: "Hacker News",
+        title: "Show HN: I replaced my entire data pipeline with Claude + SQLite",
+        link: "https://news.ycombinator.com/item?id=example1",
+        summary: "Indie hacker teardown of a surprisingly simple architecture. 200 points and lively debate about when 'vibe coding' with LLMs is and isn't appropriate for production.",
+        upvotes: "200 pts"
+      }
+    ],
+    x: [
+      {
+        handle: "@karpathy",
+        link: "https://x.com/karpathy/status/example",
+        text: "Good thread on why inference-time compute scaling is more exciting than pretraining scaling right now. The intuition: you can spend more compute on hard problems at test time without retraining."
+      },
+      {
+        handle: "@emollick",
+        link: "https://x.com/emollick/status/example",
+        text: "New study out: students who used AI tutoring tools showed 23% better retention at 30-day follow-up vs. control group. First rigorous RCT on this. Education is the highest-signal domain to watch."
+      },
+      {
+        handle: "@steipete",
+        link: "https://x.com/steipete/status/example",
+        text: "The multi-agent orchestration in OpenClaw 0.8.2 is genuinely different from what I've seen before. Thread on how we're using it internally at Proxyman to parallelize test generation."
+      }
+    ]
+  },
+
+  worthTesting: [
+    {
+      num: 1,
+      title: "OpenAI reasoning model — coding eval",
+      link: "https://platform.openai.com",
+      desc: "The benchmark numbers are impressive but the real test is your own codebase. Run it on your hardest real-world coding task and compare directly to o3.",
+      prompt: "You are a senior software engineer reviewing a codebase.\n\nTask: [paste your hardest coding problem here]\n\nThink step by step before writing any code. Identify edge cases first.",
+      tags: ["model"]
+    },
+    {
+      num: 2,
+      title: "auto-slides community skill",
+      link: "https://github.com/mxkaske/auto-slides",
+      desc: "Install the auto-slides skill and try it on a recent brief or document you've written. 2,000 stars in a week suggests it's onto something.",
+      prompt: null,
+      tags: ["workflow", "tool"]
+    },
+    {
+      num: 3,
+      title: "Mistral Small 3.2 locally",
+      link: "https://huggingface.co/mistralai/Mistral-Small-3.2-Instruct",
+      desc: "If you have a machine with 8GB+ VRAM, this is the best local model to benchmark right now. Pull it via Ollama and run your standard set of tests.",
+      prompt: null,
+      tags: ["model", "open-source"]
+    },
+    {
+      num: 4,
+      title: "OpenClaw multi-agent orchestration (v0.8.2)",
+      link: "https://github.com/openclaw/openclaw/releases/tag/v0.8.2",
+      desc: "If you use OpenClaw, upgrading to 0.8.2 unlocks multi-agent skills. The orchestrator → specialist pattern is worth experimenting with for any task you currently do in sequence.",
+      prompt: "You are an orchestrator. Your job is to break the following task into 3 parallel sub-tasks and delegate each to a specialist.\n\nTask: [your task here]\n\nFor each sub-task, specify: what it is, what inputs it needs, and what output format you expect back.",
+      tags: ["workflow", "tool"]
+    }
+  ],
+
+  promptOfWeek: {
+    title: "Multi-source research synthesis",
+    desc: "Inspired by the HuggingFace paper on LLM reasoning vs. memorisation — use this when you need Claude to genuinely reason across multiple sources rather than just summarise each one.",
+    prompt: `You are a research analyst. I will give you content from multiple sources on the same topic.
+
+Your job is NOT to summarise each source separately.
+
+Instead:
+1. Find where sources AGREE — what does the consensus say?
+2. Find where sources CONTRADICT — what are the genuine disagreements?
+3. Identify what is MISSING — what question do all sources leave unanswered?
+4. Give me your ASSESSMENT — which source is most credible and why?
+
+Sources:
+[paste source 1]
+---
+[paste source 2]
+---
+[paste source 3]`
+  }
+};
+</script>
+
+<!-- ══════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo"><div class="logo-pulse"></div>AI Digest</div>
+    <div class="header-date" id="hDate"></div>
+    <div class="header-actions">
+      <button class="archive-btn" onclick="window.location.href='archive/'">Past issues ↗</button>
+      <div class="search-wrap">
+        <input class="search" type="text" placeholder="Search digest…" id="searchInput" oninput="applyFilters()" />
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     MAIN
+     ══════════════════════════════════════════ -->
+<main class="main" id="main"></main>
+
+<footer class="footer">
+  Generated by Claude · <span id="footDate"></span> · <a href="archive/">Browse all issues</a>
+</footer>
+
+<!-- ══════════════════════════════════════════
+     APP
+     ══════════════════════════════════════════ -->
+<script>
+// ── State ──────────────────────────────────
+let activeTag = 'all';
+let crossOnly = false;
+let searchQ = '';
+
+// ── Helpers ────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function verdict(v) {
+  if (!v) return '';
+  const map = { 'worth-it': ['b-worth','✦ Worth it'], 'watch-later': ['b-later','◷ Watch later'], 'skip': ['b-skip','— Skip'] };
+  const [cls, label] = map[v] || [];
+  return cls ? `<span class="badge ${cls}">${label}</span>` : '';
+}
+
+function tags(arr) {
+  if (!arr || !arr.length) return '';
+  return arr.map(t => `<span class="tc tc-${t}">#${t}</span>`).join(' ');
+}
+
+function crossBadge(sources) {
+  if (!sources || sources.length < 2) return '';
+  return `<span class="badge b-cross">📡 ${sources.length} sources</span>`;
+}
+
+function trendBadge(t) {
+  if (!t) return '';
+  const map = { up: ['b-cont','↑ Ongoing'], new: ['b-new','★ New this week'], down: ['b-cont','↓ Fading'] };
+  const [cls, label] = map[t] || [];
+  return cls ? `<span class="badge ${cls}">${label}</span>` : '';
+}
+
+function itemAttrs(item) {
+  const t = (item.tags || []).join(' ');
+  const cs = (item.sources || []).length >= 2 ? 'yes' : 'no';
+  const text = JSON.stringify(item).toLowerCase();
+  return `data-tags="${t}" data-cross="${cs}" data-text="${esc(text)}"`;
+}
+
+function section(id, icon, title, count, body, startOpen = true) {
+  const state = startOpen ? '' : ' shut';
+  return `
+    <div class="section${state}" id="sec-${id}">
+      <div class="sec-head" onclick="toggleSec('${id}')">
+        <span class="sec-icon">${icon}</span>
+        <span class="sec-title">${title}</span>
+        ${count !== null ? `<span class="sec-count">${count}</span>` : ''}
+        <span class="sec-chevron">▾</span>
+      </div>
+      <div class="sec-body">${body}</div>
+    </div>`;
+}
+
+function nothing() {
+  return `<div class="nothing">Nothing significant this week.</div>`;
+}
+
+// ── Render ─────────────────────────────────
+function render() {
+  const D = DIGEST;
+  document.getElementById('hDate').textContent = 'Week of ' + D.date;
+  document.getElementById('footDate').textContent = 'Generated ' + D.generated;
+  document.title = 'AI Digest — ' + D.date;
+
+  let html = '';
+
+  // TL;DR
+  html += `
+    <div class="tldr">
+      <div class="tldr-eyebrow">TL;DR — Week of ${esc(D.date)}</div>
+      <div class="tldr-text">${esc(D.tldr)}</div>
+    </div>`;
+
+  // Filter bar
+  const allTags = ['all','model','tool','research','workflow','open-source','business'];
+  html += `<div class="filter-bar" id="filterBar">
+    <span class="filter-label">Filter</span>
+    ${allTags.map(t => `<button class="tag-pill${t==='all'?' on':''}" data-tag="${t}" onclick="setTag('${t}')">${t==='all'?'All':'#'+t}</button>`).join('')}
+    <label class="cross-toggle" onclick="toggleCross()">
+      <div class="switch" id="crossSwitch"></div>
+      <span>Multi-source only</span>
+    </label>
+  </div>`;
+
+  // Prompt of the Week (above sections for visibility)
+  const pw = D.promptOfWeek;
+  html += `
+    <div class="potw">
+      <div class="potw-eye">✦ Prompt of the Week</div>
+      <div class="potw-title">${esc(pw.title)}</div>
+      <div class="potw-desc">${esc(pw.desc)}</div>
+      <div class="potw-prompt-box">
+        <div class="potw-prompt-text" id="potw-text">${esc(pw.prompt)}</div>
+        <button class="copy-btn" onclick="copyPrompt('potw-text',this)">Copy</button>
+      </div>
+    </div>`;
+
+  // ── Top Stories
+  let storiesHtml = D.topStories.map((s,i) => `
+    <div class="story item" ${itemAttrs(s)}>
+      <div class="story-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="story-body">
+        <div class="story-hl"><a href="${s.link}" target="_blank">${esc(s.headline)}</a></div>
+        <div class="story-sum">${esc(s.summary)}</div>
+        <div class="story-foot">
+          ${crossBadge(s.sources)}
+          ${trendBadge(s.trend)}
+          ${verdict(s.verdict)}
+          ${tags(s.tags)}
+        </div>
+      </div>
+    </div>`).join('');
+  html += section('stories','🔥','Top Stories This Week', D.topStories.length, storiesHtml || nothing());
+
+  // ── YouTube
+  let ytHtml = '';
+  for (const ch of D.youtube) {
+    if (!ch.videos || !ch.videos.length) {
+      ytHtml += `<div class="sub-head">${esc(ch.channel)}</div><div class="nothing">Nothing this week.</div>`;
+      continue;
+    }
+    ytHtml += `<div class="sub-head">${esc(ch.channel)} <span style="opacity:0.5;font-weight:400">${esc(ch.handle)}</span></div>`;
+    ytHtml += ch.videos.map(v => `
+      <div class="item" ${itemAttrs(v)}>
+        <div class="item-top">
+          <div class="item-title"><a href="${v.link}" target="_blank">${esc(v.title)}</a></div>
+          <div class="item-badges">${verdict(v.verdict)}</div>
+        </div>
+        <div class="item-meta">
+          <span>▶ ${esc(v.duration)}</span>
+          ${tags(v.tags)}
+        </div>
+        <div class="item-body">${esc(v.takeaway)}</div>
+      </div>`).join('');
+  }
+  const ytCount = D.youtube.reduce((n,c) => n + (c.videos||[]).length, 0);
+  html += section('youtube','▶','YouTube Highlights', ytCount, ytHtml);
+
+  // ── HuggingFace
+  let hfHtml = '';
+  const hf = D.huggingface;
+
+  hfHtml += `<div class="sub-head">New Models</div>`;
+  hfHtml += (hf.models||[]).map(m => `
+    <div class="item" ${itemAttrs(m)}>
+      <div class="item-top">
+        <div class="item-title"><a href="${m.link}" target="_blank">${esc(m.name)}</a></div>
+        <div class="item-badges">${verdict(m.verdict)}</div>
+      </div>
+      <div class="item-meta">${tags(m.tags)}</div>
+      <div class="item-body">${esc(m.summary)}</div>
+    </div>`).join('') || nothing();
+
+  hfHtml += `<div class="sub-head">Interesting Datasets</div>`;
+  hfHtml += (hf.datasets||[]).map(d => `
+    <div class="item" ${itemAttrs(d)}>
+      <div class="item-top">
+        <div class="item-title"><a href="${d.link}" target="_blank">${esc(d.name)}</a></div>
+        <div class="item-badges">${verdict(d.verdict)}</div>
+      </div>
+      <div class="item-meta">${tags(d.tags)}</div>
+      <div class="item-body">${esc(d.summary)}</div>
+    </div>`).join('') || nothing();
+
+  hfHtml += `<div class="sub-head">Papers Worth Reading</div>`;
+  hfHtml += (hf.papers||[]).map(p => `
+    <div class="item" ${itemAttrs(p)}>
+      <div class="item-top">
+        <div class="item-title"><a href="${p.link}" target="_blank">${esc(p.name)}</a></div>
+        <div class="item-badges">${verdict(p.verdict)}</div>
+      </div>
+      <div class="item-meta"><span style="color:var(--dim)">${esc(p.authors)}</span> ${tags(p.tags)}</div>
+      <div class="item-body">${esc(p.summary)}</div>
+    </div>`).join('') || nothing();
+
+  const hfCount = (hf.models||[]).length + (hf.datasets||[]).length + (hf.papers||[]).length;
+  html += section('hf','🤗','Hugging Face', hfCount, hfHtml);
+
+  // ── OpenClaw
+  let ocHtml = (D.openclaw||[]).map(o => `
+    <div class="item" ${itemAttrs(o)}>
+      <div class="item-top">
+        <div class="item-title"><a href="${o.link}" target="_blank">${esc(o.title)}</a></div>
+        <div class="item-badges">
+          ${o.type === 'release' ? '<span class="badge b-new">Release</span>' : ''}
+          ${verdict(o.verdict)}
+        </div>
+      </div>
+      <div class="item-meta">${tags(o.tags)}</div>
+      <div class="item-body">${esc(o.summary)}</div>
+    </div>`).join('') || nothing();
+  html += section('oc','🦅','OpenClaw Updates', (D.openclaw||[]).length, ocHtml);
+
+  // ── Plugins
+  let plHtml = '';
+  const verified = D.plugins.verified || [];
+  const community = D.plugins.community || [];
+  plHtml += `<div class="sub-head">Anthropic Verified</div>`;
+  plHtml += verified.map(p => `
+    <div class="item">
+      <div class="item-top">
+        <div class="item-title"><a href="${p.link}" target="_blank">${esc(p.name)}</a></div>
+        <div class="item-badges"><span class="badge b-new">Verified</span></div>
+      </div>
+      <div class="item-meta"><code style="font-size:11px;color:var(--dim);font-family:monospace">${esc(p.install)}</code></div>
+      <div class="item-body">${esc(p.summary)}</div>
+    </div>`).join('') || nothing();
+
+  plHtml += `<div class="sub-head">Community Skills</div>`;
+  plHtml += community.map(p => `
+    <div class="item" ${itemAttrs(p)}>
+      <div class="item-top">
+        <div class="item-title"><a href="${p.link}" target="_blank">${esc(p.name)}</a></div>
+        <div class="item-badges">
+          ${p.validated ? '<span class="badge b-worth">✓ Validated</span>' : '<span class="badge b-skip">Unverified</span>'}
+        </div>
+      </div>
+      <div class="item-meta"><span style="color:var(--dim)">${esc(p.author)}</span> ${tags(p.tags)}</div>
+      <div class="item-body">${esc(p.summary)}</div>
+    </div>`).join('') || nothing();
+
+  html += section('plugins','🔌','New Claude Skills & Plugins', verified.length + community.length, plHtml);
+
+  // ── Community Signals
+  let comHtml = '';
+  comHtml += `<div class="sub-head">Reddit & Hacker News</div>`;
+  comHtml += (D.community.reddit||[]).map(r => `
+    <div class="item">
+      <div class="item-top">
+        <div class="item-title"><a href="${r.link}" target="_blank">${esc(r.title)}</a></div>
+        <div class="item-badges"><span style="font-size:11px;color:var(--dim)">${esc(r.upvotes)}</span></div>
+      </div>
+      <div class="item-meta"><span style="color:var(--accent);font-size:12px">${esc(r.sub)}</span></div>
+      <div class="item-body">${esc(r.summary)}</div>
+    </div>`).join('') || nothing();
+
+  comHtml += `<div class="sub-head">X Highlights</div>`;
+  comHtml += (D.community.x||[]).map(x => `
+    <div class="item">
+      <div class="item-meta"><a href="${x.link}" target="_blank" style="color:var(--accent);font-weight:600">${esc(x.handle)}</a></div>
+      <div class="item-body">${esc(x.text)}</div>
+    </div>`).join('') || nothing();
+
+  const comCount = (D.community.reddit||[]).length + (D.community.x||[]).length;
+  html += section('com','📡','Community Signals', comCount, comHtml);
+
+  // ── Worth Testing
+  let wtHtml = (D.worthTesting||[]).map(w => `
+    <div class="worth-item" ${itemAttrs(w)}>
+      <div class="worth-row">
+        <div class="worth-num">${w.num}</div>
+        <div class="worth-title"><a href="${w.link}" target="_blank">${esc(w.title)}</a></div>
+      </div>
+      <div class="worth-desc">${esc(w.desc)} ${tags(w.tags)}</div>
+      ${w.prompt ? `
+        <div class="prompt-box">
+          <div class="prompt-eyebrow">Try this prompt</div>
+          <div class="prompt-text" id="wp-${w.num}">${esc(w.prompt)}</div>
+          <button class="copy-btn" onclick="copyPrompt('wp-${w.num}',this)">Copy</button>
+        </div>` : ''}
+    </div>`).join('') || nothing();
+  html += section('worth','⚡','Worth Testing This Week', (D.worthTesting||[]).length, wtHtml);
+
+  document.getElementById('main').innerHTML = html;
+}
+
+// ── Interactivity ──────────────────────────
+function toggleSec(id) {
+  document.getElementById('sec-'+id).classList.toggle('shut');
+}
+
+function setTag(tag) {
+  activeTag = tag;
+  document.querySelectorAll('.tag-pill').forEach(el => {
+    el.classList.toggle('on', el.dataset.tag === tag);
+  });
+  applyFilters();
+}
+
+function toggleCross() {
+  crossOnly = !crossOnly;
+  document.getElementById('crossSwitch').classList.toggle('on', crossOnly);
+  applyFilters();
+}
+
+function applyFilters() {
+  searchQ = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('.item').forEach(el => {
+    const t = el.dataset.tags || '';
+    const cs = el.dataset.cross === 'yes';
+    const text = el.dataset.text || '';
+    const tagOk = activeTag === 'all' || t.includes(activeTag);
+    const crossOk = !crossOnly || cs;
+    const searchOk = !searchQ || text.includes(searchQ);
+    el.classList.toggle('hidden', !(tagOk && crossOk && searchOk));
+  });
+}
+
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+// ── Init ───────────────────────────────────
+render();
+</script>
+</body>
+</html>
